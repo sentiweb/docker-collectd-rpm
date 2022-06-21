@@ -20,10 +20,6 @@ Source96: snmp.conf
 Source97: rrdtool.conf
 Source98: onewire.conf
 
-Patch0: %{name}-include-collectd.d.patch
-Patch1: %{name}-gcc11.patch
-Patch2: %{name}-remove-des-support-from-snmp-plugin.patch
-
 BuildRequires: perl-devel
 BuildRequires: perl-generators
 BuildRequires: perl-interpreter
@@ -289,15 +285,6 @@ This plugin connects to a memcached server, queries one or more
 given pages and parses the returned data according to user specification.
 
 
-%package modbus
-Summary:       Modbus plugin for collectd
-Requires:      %{name}%{?_isa} = %{version}-%{release}
-BuildRequires: libmodbus-devel
-%description modbus
-This plugin connects to a Modbus "slave" via Modbus/TCP
-and reads register values.
-
-
 %package mysql
 Summary:       MySQL plugin for collectd
 Requires:      %{name}%{?_isa} = %{version}-%{release}
@@ -349,15 +336,6 @@ BuildRequires: nut-devel
 %description nut
 This plugin for collectd provides Network UPS Tools support.
 %endif
-
-
-%package onewire
-Summary:       OneWire bus plugin for collectd
-Requires:      %{name}%{?_isa} = %{version}-%{release}
-BuildRequires: owfs-devel
-%description onewire
-The experimental OneWire plugin collects temperature information
-from sensors connected to the computer over the OneWire bus.
 
 
 %package openldap
@@ -600,26 +578,14 @@ Requires:      %{name}%{?_isa} = %{version}-%{release}
 %description write_tsdb
 This plugin can send data to OpenTSDB.
 
-
-%ifarch x86_64
-%package xencpu
-Summary:       xencpu plugin for collectd
-Requires:      %{name}%{?_isa} = %{version}-%{release}
-BuildRequires: xen-devel
-%description xencpu
-The xencpu plugin collects CPU statistics from Xen.
-%endif
-
-
 %package zookeeper
 Summary:       Zookeeper plugin for collectd
 Requires:      %{name}%{?_isa} = %{version}-%{release}
 %description zookeeper
 This is a collectd plugin that reads data from Zookeeper's MNTR command.
 
-
 %prep
-%autosetup -v -p1
+%autosetup -v 
 
 # recompile generated files
 touch src/pinba.proto
@@ -652,6 +618,7 @@ touch src/pinba.proto
     --disable-lvm \
     --disable-mic \
     --disable-mqtt \
+    --disable-modbus \
     --disable-netapp \
     --disable-netstat_udp \
 %ifarch s390 s390x
@@ -661,6 +628,7 @@ touch src/pinba.proto
 %ifarch s390 s390x
     --disable-pcie_errors \
 %endif
+    --disable-onewire \
     --disable-pf \
     --disable-procevent \
     --disable-redfish \
@@ -676,9 +644,7 @@ touch src/pinba.proto
     --disable-turbostat \
     --disable-ubi \
     --disable-write_influxdb_udp \
-%ifnarch x86_64
     --disable-xencpu \
-%endif
     --disable-xmms \
     --disable-zone \
     --with-java=%{java_home}/ \
@@ -727,7 +693,7 @@ cp %{SOURCE94} %{buildroot}%{_sysconfdir}/collectd.d/nginx.conf
 cp %{SOURCE95} %{buildroot}%{_sysconfdir}/collectd.d/sensors.conf
 cp %{SOURCE96} %{buildroot}%{_sysconfdir}/collectd.d/snmp.conf
 cp %{SOURCE97} %{buildroot}%{_sysconfdir}/collectd.d/rrdtool.conf
-cp %{SOURCE98} %{buildroot}%{_sysconfdir}/collectd.d/onewire.conf
+# cp %{SOURCE98} %{buildroot}%{_sysconfdir}/collectd.d/onewire.conf
 
 # configs for subpackaged plugins
 %ifnarch s390 s390x
@@ -748,7 +714,7 @@ rm -f %{buildroot}/%{_libdir}/{collectd/,}*.la
 %ifnarch s390 s390x
 # checks fails in test_plugin_smart on s390
 %check
-make check
+# make check
 %endif
 
 
@@ -1027,11 +993,6 @@ make check
 %files memcachec
 %{_libdir}/collectd/memcachec.so
 
-
-%files modbus
-%{_libdir}/collectd/modbus.so
-
-
 %files mysql
 %{_libdir}/collectd/mysql.so
 %config(noreplace) %{_sysconfdir}/collectd.d/mysql.conf
@@ -1059,11 +1020,6 @@ make check
 %{_libdir}/collectd/nut.so
 %config(noreplace) %{_sysconfdir}/collectd.d/nut.conf
 %endif
-
-
-%files onewire
-%{_libdir}/collectd/onewire.so
-%config(noreplace) %{_sysconfdir}/collectd.d/onewire.conf
 
 
 %files openldap
@@ -1196,15 +1152,8 @@ make check
 %{_libdir}/collectd/write_tsdb.so
 
 
-%ifarch x86_64
-%files xencpu
-%{_libdir}/collectd/xencpu.so
-%endif
-
-
 %files zookeeper
 %{_libdir}/collectd/zookeeper.so
-
 
 
 %changelog
